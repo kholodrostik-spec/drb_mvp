@@ -1,13 +1,13 @@
-package com.map.galway;
+package com.drb.DrbMVP;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class GalwayApplication {
+public class DrbMvpApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(GalwayApplication.class, args);
+		SpringApplication.run(DrbMvpApplication.class, args);
 	}
 
 }

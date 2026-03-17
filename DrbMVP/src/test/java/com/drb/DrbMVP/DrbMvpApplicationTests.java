@@ -1,10 +1,10 @@
-package com.map.galway;
+package com.drb.DrbMVP;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class GalwayApplicationTests {
+class DrbMvpApplicationTests {
 
 	@Test
 	void contextLoads() {

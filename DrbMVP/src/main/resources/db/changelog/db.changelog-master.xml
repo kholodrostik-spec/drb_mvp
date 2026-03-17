@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="1-enable-postgis" author="rostyslav">
+        <sql>CREATE EXTENSION IF NOT EXISTS postgis;</sql>
+    </changeSet>
+
+    <changeSet id="2-create-streets" author="rostyslav">
+        <sql>
+            CREATE TABLE IF NOT EXISTS streets AS
+            SELECT
+            name,
+            highway,
+            ST_Length(ST_Transform(way, 4326)::geography) AS length_m
+            FROM planet_osm_line
+            WHERE highway IS NOT NULL
+            AND name IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="3-add-primary-key" author="rostyslav">
+        <sql>ALTER TABLE streets ADD COLUMN id SERIAL PRIMARY KEY;</sql>
+    </changeSet>
+
+</databaseChangeLog>
