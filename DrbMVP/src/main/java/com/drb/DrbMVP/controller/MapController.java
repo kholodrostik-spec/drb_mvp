@@ -1,6 +1,7 @@
 package com.drb.DrbMVP.controller;
 
 import com.drb.DrbMVP.dto.NearestPointDto;
+import com.drb.DrbMVP.dto.RouteDto;
 import com.drb.DrbMVP.service.MapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,5 +34,22 @@ public class MapController {
             @Parameter(description = "Longitude of the point", example = "-9.0568")
             @RequestParam double lon) {
         return mapService.findNearestRoad(lat, lon);
+    }
+
+    @GetMapping("/route")
+    @Operation(
+            summary = "Find shortest route between two points",
+            description = "Returns shortest path along roads using Dijkstra algorithm"
+    )
+    public RouteDto findRoute(
+            @Parameter(description = "Latitude of start point", example = "53.2707")
+            @RequestParam double latFrom,
+            @Parameter(description = "Longitude of start point", example = "-9.0568")
+            @RequestParam double lonFrom,
+            @Parameter(description = "Latitude of end point", example = "53.3498")
+            @RequestParam double latTo,
+            @Parameter(description = "Longitude of end point", example = "-6.2603")
+            @RequestParam double lonTo) {
+        return mapService.findShortestRoute(latFrom, lonFrom, latTo, lonTo);
     }
 }

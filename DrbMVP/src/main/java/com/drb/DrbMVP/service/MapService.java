@@ -1,6 +1,7 @@
 package com.drb.DrbMVP.service;
 
 import com.drb.DrbMVP.dto.NearestPointDto;
+import com.drb.DrbMVP.dto.RouteDto;
 import com.drb.DrbMVP.repository.MapRepository;
 import org.springframework.stereotype.Service;
 
@@ -38,5 +39,13 @@ public class MapService {
         if (!inside) {
             throw new IllegalArgumentException("Coordinates must be within Ireland");
         }
+    }
+
+    public RouteDto findShortestRoute(
+            double latFrom, double lonFrom,
+            double latTo, double lonTo) {
+        validateCoordinates(latFrom, lonFrom);
+        validateCoordinates(latTo, lonTo);
+        return mapRepository.findShortestRoute(latFrom, lonFrom, latTo, lonTo);
     }
 }

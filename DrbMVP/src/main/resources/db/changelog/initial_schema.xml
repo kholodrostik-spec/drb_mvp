@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="1-enable-postgis" author="rostyslav">
+        <sql>CREATE EXTENSION IF NOT EXISTS postgis;</sql>
+    </changeSet>
+
+    <changeSet id="2-enable-pgrouting" author="rostyslav">
+        <sql>CREATE EXTENSION IF NOT EXISTS pgrouting;</sql>
+    </changeSet>
+
+    <changeSet id="3-create-streets" author="rostyslav">
+        <sql>
+            CREATE TABLE IF NOT EXISTS streets AS
+            SELECT
+            l.osm_id,
+            l.name,
+            l.highway,
+            ST_Length(ST_Transform(l.way, 4326)::geography) AS length_m,
+            l.way AS geom,
+            p.name AS region
+            FROM planet_osm_line l
+            LEFT JOIN planet_osm_polygon p
+            ON p.admin_level = '6'
+            AND p.boundary = 'administrative'
+            AND ST_Intersects(l.way, p.way)
+            WHERE l.highway IS NOT NULL
+            AND l.name IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="4-add-primary-key" author="rostyslav">
+        <sql>ALTER TABLE streets ADD COLUMN id SERIAL PRIMARY KEY;</sql>
+    </changeSet>
+
+    <changeSet id="5-add-index" author="rostyslav">
+        <sql>CREATE INDEX idx_streets_geom ON streets USING GIST(geom);</sql>
+    </changeSet>
+
+    <changeSet id="6-create-road-network" author="rostyslav">
+        <sql>
+            CREATE TABLE IF NOT EXISTS road_network AS
+            SELECT
+            osm_id AS id,
+            name,
+            highway,
+            ST_Transform(way, 4326) AS geom,
+            ST_Length(ST_Transform(way, 4326)::geography) AS cost
+            FROM planet_osm_line
+            WHERE highway IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="7-road-network-pk" author="rostyslav">
+        <sql>ALTER TABLE road_network ADD COLUMN rid SERIAL PRIMARY KEY;</sql>
+    </changeSet>
+
+    <changeSet id="8-road-network-topology" author="rostyslav">
+        <sql>
+            ALTER TABLE road_network ADD COLUMN source INTEGER;
+            ALTER TABLE road_network ADD COLUMN target INTEGER;
+        </sql>
+    </changeSet>
+
+    <changeSet id="9-build-topology" author="rostyslav">
+        <sql>
+            ALTER TABLE road_network ADD COLUMN IF NOT EXISTS source BIGINT;
+            ALTER TABLE road_network ADD COLUMN IF NOT EXISTS target BIGINT;
+
+            UPDATE road_network rn
+            SET source = v.id
+            FROM (SELECT id, geom FROM pgr_extractVertices(
+            'SELECT rid AS id, geom FROM road_network'
+            )) v
+            WHERE ST_StartPoint(rn.geom) = v.geom;
+
+            UPDATE road_network rn
+            SET target = v.id
+            FROM (SELECT id, geom FROM pgr_extractVertices(
+            'SELECT rid AS id, geom FROM road_network'
+            )) v
+            WHERE ST_EndPoint(rn.geom) = v.geom;
+        </sql>
+    </changeSet>
+
+    <changeSet id="10-road-network-index" author="rostyslav">
+        <sql>CREATE INDEX idx_road_network_geom ON road_network USING GIST(geom);</sql>
+    </changeSet>
+
+    <changeSet id="11-road-network-reverse-cost" author="rostyslav">
+        <sql>
+            ALTER TABLE road_network ADD COLUMN IF NOT EXISTS reverse_cost DOUBLE PRECISION;
+            UPDATE road_network SET reverse_cost = cost;
+            CREATE INDEX IF NOT EXISTS idx_road_network_source ON road_network(source);
+            CREATE INDEX IF NOT EXISTS idx_road_network_target ON road_network(target);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
