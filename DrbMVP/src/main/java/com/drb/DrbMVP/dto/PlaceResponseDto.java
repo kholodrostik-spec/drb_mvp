@@ -1,0 +1,19 @@
+package com.drb.DrbMVP.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class PlaceResponseDto {
+    private Long id;
+    private String name;
+    private String description;
+    private Double latitude;
+    private Double longitude;
+    private String category;
+    private Double rating;
+    private String nearestRoadName;
+    private String nearestRoadHighway;
+    private Double nearestRoadDistance;
+}
