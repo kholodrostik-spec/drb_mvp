@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="19-create-reviews" author="rostyslav">
+        <sql><![CDATA[
+            CREATE TABLE reviews (
+                location_id BIGINT NOT NULL REFERENCES locations(id),
+                user_id     BIGINT NOT NULL REFERENCES users(id),
+                rating      DOUBLE PRECISION CHECK (rating >= 1 AND rating <= 5),
+                comment     TEXT,
+                created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                PRIMARY KEY (location_id, user_id)
+            );
+        ]]></sql>
+    </changeSet>
+
+    <changeSet id="20-reviews-indexes" author="rostyslav">
+        <sql>
+            CREATE INDEX idx_reviews_location_id ON reviews(location_id);
+            CREATE INDEX idx_reviews_user_id     ON reviews(user_id);
+            CREATE INDEX idx_reviews_rating      ON reviews(rating);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

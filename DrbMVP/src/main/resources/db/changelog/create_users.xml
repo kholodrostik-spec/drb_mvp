@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="12-create-users" author="rostyslav">
+        <sql>
+            CREATE TABLE users (
+            id         BIGSERIAL PRIMARY KEY,
+            email      VARCHAR(255) NOT NULL UNIQUE,
+            name       VARCHAR(255) NOT NULL,
+            role       VARCHAR(50)  NOT NULL DEFAULT 'ROLE_USER',
+            uuid       UUID         NOT NULL DEFAULT gen_random_uuid(),
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="13-users-index" author="rostyslav">
+        <sql>
+            CREATE INDEX idx_users_email ON users(email);
+            CREATE INDEX idx_users_uuid  ON users(uuid);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

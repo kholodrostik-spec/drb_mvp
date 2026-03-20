@@ -6,6 +6,8 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
         <include file="db/changelog/initial_schema.xml"/>
-        <include file="db/changelog/create_places.xml"/>
+        <include file="db/changelog/create_users.xml"/>
+        <include file="db/changelog/create_locations.xml"/>
+        <include file="db/changelog/create_reviews.xml"/>
 
 </databaseChangeLog>
