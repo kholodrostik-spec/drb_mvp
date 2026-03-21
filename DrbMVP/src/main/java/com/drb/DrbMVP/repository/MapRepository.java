@@ -1,7 +1,7 @@
 package com.drb.DrbMVP.repository;
 
-import com.drb.DrbMVP.dto.NearestPointDto;
-import com.drb.DrbMVP.dto.RouteDto;
+import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.route.RouteDto;
 import com.drb.DrbMVP.exception.RouteNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;

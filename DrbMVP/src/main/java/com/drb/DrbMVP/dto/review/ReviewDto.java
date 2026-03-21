@@ -1,4 +1,4 @@
-package com.drb.DrbMVP.dto;
+package com.drb.DrbMVP.dto.review;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

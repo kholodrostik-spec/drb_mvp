@@ -1,6 +1,10 @@
 package com.drb.DrbMVP.repository;
 
-import com.drb.DrbMVP.dto.*;
+import com.drb.DrbMVP.dto.location.LocationDto;
+import com.drb.DrbMVP.dto.location.LocationResponseDto;
+import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.review.ReviewDto;
+import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

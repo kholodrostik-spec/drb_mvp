@@ -1,6 +1,10 @@
 package com.drb.DrbMVP.service;
 
-import com.drb.DrbMVP.dto.*;
+import com.drb.DrbMVP.dto.location.LocationDto;
+import com.drb.DrbMVP.dto.location.LocationResponseDto;
+import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.review.ReviewDto;
+import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.repository.LocationRepository;
 import com.drb.DrbMVP.repository.MapRepository;
 import org.springframework.stereotype.Service;
