@@ -25,4 +25,10 @@
         </sql>
     </changeSet>
 
+    <changeSet id="21-add-password-to-users" author="rostyslav">
+        <sql>
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

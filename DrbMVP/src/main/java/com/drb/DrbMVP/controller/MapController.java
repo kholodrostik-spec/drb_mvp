@@ -1,7 +1,7 @@
 package com.drb.DrbMVP.controller;
 
-import com.drb.DrbMVP.dto.NearestPointDto;
-import com.drb.DrbMVP.dto.RouteDto;
+import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.route.RouteDto;
 import com.drb.DrbMVP.service.MapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

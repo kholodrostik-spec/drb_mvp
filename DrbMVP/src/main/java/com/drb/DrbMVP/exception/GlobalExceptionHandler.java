@@ -42,4 +42,11 @@ public class GlobalExceptionHandler {
         }
         return Map.of("error", "Data integrity violation: " + message);
     }
+
+    @ExceptionHandler(UserHasNoPermissionToAccessException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public Map<String, String> handleNoPermission(UserHasNoPermissionToAccessException e) {
+        return Map.of("error", e.getMessage());
+    }
 }

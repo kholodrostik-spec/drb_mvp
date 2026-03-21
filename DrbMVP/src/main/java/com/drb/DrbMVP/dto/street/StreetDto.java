@@ -1,4 +1,4 @@
-package com.drb.DrbMVP.dto;
+package com.drb.DrbMVP.dto.street;
 
 import lombok.Getter;
 import lombok.Setter;

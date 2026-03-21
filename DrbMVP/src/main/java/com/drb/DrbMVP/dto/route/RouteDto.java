@@ -1,4 +1,4 @@
-package com.drb.DrbMVP.dto;
+package com.drb.DrbMVP.dto.route;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

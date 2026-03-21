@@ -1,9 +1,9 @@
 package com.drb.DrbMVP.controller;
 
-import com.drb.DrbMVP.dto.LocationDto;
-import com.drb.DrbMVP.dto.LocationResponseDto;
-import com.drb.DrbMVP.dto.ReviewDto;
-import com.drb.DrbMVP.dto.ReviewResponseDto;
+import com.drb.DrbMVP.dto.location.LocationDto;
+import com.drb.DrbMVP.dto.location.LocationResponseDto;
+import com.drb.DrbMVP.dto.review.ReviewDto;
+import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
