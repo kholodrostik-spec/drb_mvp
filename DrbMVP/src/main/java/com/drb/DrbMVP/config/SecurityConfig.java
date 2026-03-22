@@ -42,8 +42,11 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/api/auth/**"
                         ).permitAll()
-                        .requestMatchers("/api/locations/**", "/api/map/**")
-                        .hasAnyAuthority(AppConstant.ROLE_USER, AppConstant.ROLE_ADMIN)
+                        .requestMatchers(
+                                "/api/locations/**",
+                                "/api/map/**",
+                                "/api/transport/**"
+                        ).hasAnyAuthority(AppConstant.ROLE_USER, AppConstant.ROLE_ADMIN)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

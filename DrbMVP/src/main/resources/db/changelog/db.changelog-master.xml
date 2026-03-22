@@ -9,5 +9,6 @@
         <include file="db/changelog/create_users.xml"/>
         <include file="db/changelog/create_locations.xml"/>
         <include file="db/changelog/create_reviews.xml"/>
+    <include file="db/changelog/create_transport_ie.xml"/>
 
 </databaseChangeLog>

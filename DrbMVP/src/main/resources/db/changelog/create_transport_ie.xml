@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="23-create-transport-routes" author="rostyslav">
+        <sql>
+            CREATE TABLE transport_routes (
+            id            BIGSERIAL PRIMARY KEY,
+            route_id      VARCHAR(100) NOT NULL UNIQUE,
+            agency_name   VARCHAR(255),
+            route_short   VARCHAR(50),
+            route_long    VARCHAR(255),
+            route_type    SMALLINT NOT NULL,
+            route_color   VARCHAR(10),
+            geom          GEOMETRY(LineString, 4326),
+            created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="24-create-transport-stops" author="rostyslav">
+        <sql>
+            CREATE TABLE transport_stops (
+            id          BIGSERIAL PRIMARY KEY,
+            stop_id     VARCHAR(100) NOT NULL UNIQUE,
+            stop_name   VARCHAR(255) NOT NULL,
+            latitude    DOUBLE PRECISION NOT NULL,
+            longitude   DOUBLE PRECISION NOT NULL,
+            geom        GEOMETRY(Point, 4326),
+            created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="25-create-transport-trips" author="rostyslav">
+        <sql>
+            CREATE TABLE transport_trips (
+            id            BIGSERIAL PRIMARY KEY,
+            trip_id       VARCHAR(100) NOT NULL UNIQUE,
+            route_id      VARCHAR(100) NOT NULL REFERENCES transport_routes(route_id),
+            service_days  VARCHAR(50),
+            trip_headsign VARCHAR(255),
+            direction     SMALLINT
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="26-create-transport-stop-times" author="rostyslav">
+        <sql>
+            CREATE TABLE transport_stop_times (
+            id             BIGSERIAL PRIMARY KEY,
+            trip_id        VARCHAR(100) NOT NULL REFERENCES transport_trips(trip_id),
+            stop_id        VARCHAR(100) NOT NULL REFERENCES transport_stops(stop_id),
+            arrival_time   INTERVAL NOT NULL,
+            departure_time INTERVAL NOT NULL,
+            stop_sequence  INTEGER NOT NULL
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="27-transport-indexes" author="rostyslav">
+        <sql>
+            CREATE INDEX idx_transport_stops_geom    ON transport_stops USING GIST(geom);
+            CREATE INDEX idx_transport_stop_times_trip ON transport_stop_times(trip_id);
+            CREATE INDEX idx_transport_stop_times_stop ON transport_stop_times(stop_id);
+            CREATE INDEX idx_transport_trips_route    ON transport_trips(route_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
