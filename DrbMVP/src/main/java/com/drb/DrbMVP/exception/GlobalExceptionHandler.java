@@ -1,6 +1,7 @@
 package com.drb.DrbMVP.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,5 +49,12 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public Map<String, String> handleNoPermission(UserHasNoPermissionToAccessException e) {
         return Map.of("error", e.getMessage());
+    }
+
+    @ExceptionHandler(EmptyResultDataAccessException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public Map<String, String> handleEmptyResult(EmptyResultDataAccessException e) {
+        return Map.of("error", "Resource not found");
     }
 }
