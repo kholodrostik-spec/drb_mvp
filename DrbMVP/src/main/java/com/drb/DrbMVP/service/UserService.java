@@ -4,6 +4,7 @@ import com.drb.DrbMVP.dto.user.LoginDto;
 import com.drb.DrbMVP.dto.user.RegisterDto;
 import com.drb.DrbMVP.dto.user.TokenResponseDto;
 import com.drb.DrbMVP.repository.UserRepository;
+import com.drb.DrbMVP.service.service_api.EmailService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +16,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public UserService(UserRepository userRepository,
                        JwtService jwtService,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public TokenResponseDto register(RegisterDto dto) {
@@ -32,9 +36,10 @@ public class UserService {
         Map<String, Object> user = userRepository.save(
                 dto.getEmail(), dto.getName(), hashedPassword
         );
-        String token = jwtService.generateToken(
-                dto.getEmail(), "ROLE_USER"
-        );
+
+        emailService.sendRegistrationEmail(dto.getEmail(), dto.getName());
+
+        String token = jwtService.generateToken(dto.getEmail(), "ROLE_USER");
         return new TokenResponseDto(
                 token,
                 ((Number) user.get("id")).longValue(),
