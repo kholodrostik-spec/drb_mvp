@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="29-create-api-logs" author="rostyslav">
+        <sql>
+            CREATE TABLE api_logs (
+            id          BIGSERIAL PRIMARY KEY,
+            user_email  VARCHAR(255),
+            method      VARCHAR(10)  NOT NULL,
+            path        VARCHAR(500) NOT NULL,
+            query_params TEXT,
+            request_body TEXT,
+            status      INTEGER,
+            duration_ms BIGINT,
+            created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="30-api-logs-indexes" author="rostyslav">
+        <sql>
+            CREATE INDEX idx_api_logs_user_email ON api_logs(user_email);
+            CREATE INDEX idx_api_logs_path       ON api_logs(path);
+            CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,6 +1,7 @@
 package com.drb.DrbMVP.config;
 
 import com.drb.DrbMVP.constant.AppConstant;
+import com.drb.DrbMVP.security.filters.ApiLogFilter;
 import com.drb.DrbMVP.security.filters.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,9 +20,11 @@ import static com.drb.DrbMVP.constant.AppConstant.*;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final ApiLogFilter apiLogFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, ApiLogFilter apiLogFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.apiLogFilter = apiLogFilter;
     }
 
     @Bean
@@ -52,7 +55,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
 
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(apiLogFilter, JwtAuthFilter.class);
         return http.build();
     }
 }
