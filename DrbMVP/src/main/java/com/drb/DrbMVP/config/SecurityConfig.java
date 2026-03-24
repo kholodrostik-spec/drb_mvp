@@ -47,7 +47,10 @@ public class SecurityConfig {
                                 "/api/map/**",
                                 "/api/transport/**"
                         ).hasAnyAuthority(AppConstant.ROLE_USER, AppConstant.ROLE_ADMIN)
+                        .requestMatchers("/api/email/**")
+                        .hasAnyAuthority(AppConstant.ROLE_ADMIN)
                         .anyRequest().authenticated()
+
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

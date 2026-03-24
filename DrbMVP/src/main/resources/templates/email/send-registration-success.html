@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Registration Successful</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+        @media screen {
+            @font-face {
+                font-family: 'Source Sans Pro';
+                font-style: normal;
+                font-weight: 400;
+                src: local('Source Sans Pro Regular'), local('SourceSansPro-Regular'),
+                     url(https://fonts.gstatic.com/s/sourcesanspro/v10/ODelI1aHBYDBqgeIAH2zlBM0YzuT7MdOe03otPbuUS0.woff) format('woff');
+            }
+            @font-face {
+                font-family: 'Source Sans Pro';
+                font-style: normal;
+                font-weight: 700;
+                src: local('Source Sans Pro Bold'), local('SourceSansPro-Bold'),
+                     url(https://fonts.gstatic.com/s/sourcesanspro/v10/toadOcfmlt9b38dHJxOBGFkQc6VGVFSmCnC_l7QZG60.woff) format('woff');
+            }
+        }
+
+        body, table, td, a { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+        table, td { mso-table-rspace: 0pt; mso-table-lspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; }
+        a[x-apple-data-detectors] {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+        div[style*="margin: 16px 0;"] { margin: 0 !important; }
+        body { width: 100% !important; height: 100% !important; padding: 0 !important; margin: 0 !important; }
+        table { border-collapse: collapse !important; }
+        a { color: #4f9cf9; }
+        img { height: auto; line-height: 100%; text-decoration: none; border: 0; outline: none; }
+    </style>
+</head>
+<body style="background-color: #0f1117;">
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+    <!-- LOGO -->
+    <tr>
+        <td align="center" bgcolor="#0f1117" style="padding: 32px 0 0;">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                <tr>
+                    <td align="center" valign="top" bgcolor="#1a1d27"
+                        style="border-radius: 12px 12px 0 0; padding: 28px 40px; border-bottom: 2px solid #4f9cf9;">
+                        <span style="font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                     font-size: 28px; font-weight: 700; color: #4f9cf9; letter-spacing: 1px;">
+                            DrbMVP
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- HERO -->
+    <tr>
+        <td align="center" bgcolor="#0f1117">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                <tr>
+                    <td align="left" bgcolor="#1a1d27" style="padding: 36px 40px 0;">
+                        <h2 style="margin: 0; font-size: 26px; font-weight: 700;
+                                   font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                   color: #4ade80; letter-spacing: -0.5px;">
+                            ✓ Registration Successful
+                        </h2>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- BODY -->
+    <tr>
+        <td align="center" bgcolor="#0f1117">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+
+                <!-- Greeting -->
+                <tr>
+                    <td align="left" bgcolor="#1a1d27"
+                        style="padding: 24px 40px 0;
+                               font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                               font-size: 16px; line-height: 26px; color: #c9cdd8;">
+                        <p style="margin: 0;">
+                            Welcome, <strong style="color: #ffffff;">
+                            <span th:text="${userName}">John Doe</span>
+                        </strong>!
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Message -->
+                <tr>
+                    <td align="left" bgcolor="#1a1d27"
+                        style="padding: 16px 40px 28px;
+                               font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                               font-size: 16px; line-height: 26px; color: #c9cdd8;">
+                        <p style="margin: 0;">
+                            Your account has been successfully created on the <strong style="color: #ffffff;">DrbMVP</strong> platform.
+                            You can now explore all available features.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- User Details Box -->
+                <tr>
+                    <td align="center" bgcolor="#1a1d27" style="padding: 0 40px 28px;">
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%"
+                               style="background-color: #22263a; border-radius: 8px; border: 1px solid #2e3354;">
+                            <tr>
+                                <td style="padding: 24px;">
+                                    <h3 style="margin: 0 0 20px 0;
+                                               font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                               font-size: 16px; font-weight: 700; color: #4f9cf9;
+                                               text-transform: uppercase; letter-spacing: 1px;">
+                                        Account Details
+                                    </h3>
+
+                                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+                                        <!-- Name -->
+                                        <tr>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #8b92a8;">
+                                                Name
+                                            </td>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #ffffff;
+                                                       font-weight: 700; text-align: right;">
+                                                <span th:text="${userName}">John Doe</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="border-top: 1px solid #2e3354; padding: 0;"></td>
+                                        </tr>
+
+                                        <!-- Email -->
+                                        <tr>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #8b92a8;">
+                                                Email
+                                            </td>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #ffffff;
+                                                       font-weight: 700; text-align: right;">
+                                                <span th:text="${userEmail}">john.doe@example.com</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="border-top: 1px solid #2e3354; padding: 0;"></td>
+                                        </tr>
+
+                                        <!-- Role -->
+                                        <tr>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #8b92a8;">
+                                                Role
+                                            </td>
+                                            <td style="padding: 10px 0; text-align: right;">
+                                                <span style="display: inline-block; padding: 3px 12px;
+                                                             background-color: #1e3a2e; border-radius: 20px;
+                                                             font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                             font-size: 13px; font-weight: 700; color: #4ade80;">
+                                                    ROLE_USER
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" style="border-top: 1px solid #2e3354; padding: 0;"></td>
+                                        </tr>
+
+                                        <!-- Registration Date -->
+                                        <tr>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #8b92a8;">
+                                                Registered At
+                                            </td>
+                                            <td style="padding: 10px 0;
+                                                       font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                                       font-size: 14px; color: #ffffff;
+                                                       font-weight: 700; text-align: right;">
+                                                <span th:text="${registrationDate}">22.03.2026 02:00</span>
+                                            </td>
+                                        </tr>
+
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Support message -->
+                <tr>
+                    <td align="left" bgcolor="#1a1d27"
+                        style="padding: 0 40px 28px;
+                               font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                               font-size: 15px; line-height: 24px; color: #8b92a8;">
+                        <p style="margin: 0;">
+                            If you did not create this account, please contact our support team immediately.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Button -->
+                <tr>
+                    <td align="center" bgcolor="#1a1d27" style="padding: 0 40px 36px;">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="center" bgcolor="#4f9cf9" style="border-radius: 8px;">
+                                    <a th:href="${clientLink}" target="_blank"
+                                       style="display: inline-block; padding: 14px 40px;
+                                              font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                                              font-size: 16px; font-weight: 700;
+                                              color: #ffffff; text-decoration: none; border-radius: 8px;">
+                                        Get Started →
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Signature -->
+                <tr>
+                    <td align="left" bgcolor="#1a1d27"
+                        style="padding: 24px 40px; border-top: 1px solid #2e3354; border-radius: 0 0 12px 12px;
+                               font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                               font-size: 15px; line-height: 24px; color: #8b92a8;">
+                        <p style="margin: 0;">
+                            With best regards,<br>
+                            <strong style="color: #ffffff;">DrbMVP Team</strong>
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+        <td align="center" bgcolor="#0f1117" style="padding: 24px 0 40px;">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
+                <tr>
+                    <td align="center"
+                        style="font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                               font-size: 13px; line-height: 20px; color: #4a5068;">
+                        <p style="margin: 0;">
+                            You received this email because you registered on DrbMVP.<br>
+                            © 2026 DrbMVP. All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+</table>
+
+</body>
+</html>
