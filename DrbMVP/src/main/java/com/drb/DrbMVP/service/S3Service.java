@@ -1,9 +1,14 @@
 package com.drb.DrbMVP.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -12,6 +17,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class S3Service {
 
@@ -34,6 +40,9 @@ public class S3Service {
 
     public String upload(MultipartFile file, String folder) {
         validate(file);
+        log.info("Uploading file: {}, size: {}, type: {}",
+                file.getOriginalFilename(), file.getSize(), file.getContentType());
+        log.info("Using bucket={}, region={}", bucket, region);
 
         String key = folder + "/" + UUID.randomUUID() + "." + extension(file);
 

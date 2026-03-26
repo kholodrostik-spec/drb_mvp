@@ -58,8 +58,8 @@ public class LocationRepository {
 
     public ReviewResponseDto saveReview(ReviewDto dto, S3Service s3Service) {
         String sql = """
-            INSERT INTO reviews (location_id, user_id, rating, comment)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO reviews (location_id, user_id, rating, comment, photo_s3_key)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT (location_id, user_id)
             DO UPDATE SET rating = EXCLUDED.rating,
                           comment = EXCLUDED.comment,

@@ -7,9 +7,11 @@ import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.repository.LocationRepository;
 import com.drb.DrbMVP.repository.MapRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 public class LocationService {
 
@@ -35,6 +37,7 @@ public class LocationService {
     }
 
     public ReviewResponseDto addReview(ReviewDto dto, MultipartFile photo) {
+        log.info("Service received photo: {}", photo != null ? photo.getOriginalFilename() + " size=" + photo.getSize() : "NULL");
         if (dto.getRating() < 1 || dto.getRating() > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }

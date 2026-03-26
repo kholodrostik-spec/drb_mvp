@@ -4,18 +4,15 @@ import com.drb.DrbMVP.dto.location.LocationDto;
 import com.drb.DrbMVP.dto.location.LocationResponseDto;
 import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
-import com.drb.DrbMVP.dto.review.ReviewWithPhotoRequest;
 import com.drb.DrbMVP.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/locations")
 @Tag(name = "Locations API", description = "Endpoints for managing locations and reviews")
@@ -42,12 +39,15 @@ public class LocationController {
 //    @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
 //            schema = @Schema(implementation = ReviewWithPhotoRequest.class)))
     public ReviewResponseDto addReview(
-            @RequestParam Long locationId,
-            @RequestParam Long userId,
-            @RequestParam Double rating,
-            @RequestParam(required = false) String comment,
-            @RequestParam(required = false) MultipartFile photo
+            @RequestParam("locationId") Long locationId,
+            @RequestParam("userId") Long userId,
+            @RequestParam("rating") Double rating,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestParam(value = "photo", required = false) MultipartFile photo
     ) {
+
+        log.info("Photo received: {}", photo != null ? photo.getOriginalFilename() + " size=" + photo.getSize() : "NULL");
+
         ReviewDto dto = new ReviewDto();
         dto.setLocationId(locationId);
         dto.setUserId(userId);
