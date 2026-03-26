@@ -7,19 +7,25 @@ import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.repository.LocationRepository;
 import com.drb.DrbMVP.repository.MapRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 public class LocationService {
 
     private final LocationRepository locationRepository;
     private final MapRepository mapRepository;
+    private final S3Service s3Service;
 
-    public LocationService(LocationRepository locationRepository, MapRepository mapRepository) {
+    public LocationService(LocationRepository locationRepository,
+                           MapRepository mapRepository,
+                           S3Service s3Service) {
         this.locationRepository = locationRepository;
         this.mapRepository = mapRepository;
+        this.s3Service = s3Service;
     }
-
     public LocationResponseDto addLocation(LocationDto dto) {
         validateCoordinates(dto.getLatitude(), dto.getLongitude());
 
@@ -30,7 +36,8 @@ public class LocationService {
         return locationRepository.saveLocation(dto, nearest);
     }
 
-    public ReviewResponseDto addReview(ReviewDto dto) {
+    public ReviewResponseDto addReview(ReviewDto dto, MultipartFile photo) {
+        log.info("Service received photo: {}", photo != null ? photo.getOriginalFilename() + " size=" + photo.getSize() : "NULL");
         if (dto.getRating() < 1 || dto.getRating() > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
@@ -40,7 +47,12 @@ public class LocationService {
         if (!locationRepository.existsLocation(dto.getLocationId())) {
             throw new IllegalArgumentException("Location with id " + dto.getLocationId() + " does not exist");
         }
-        return locationRepository.saveReview(dto);
+        if (photo != null && !photo.isEmpty()) {
+            String s3Key = s3Service.upload(photo, "reviews/" + dto.getLocationId());
+            dto.setPhotoS3Key(s3Key);
+        }
+
+        return locationRepository.saveReview(dto, s3Service);
     }
 
     private void validateCoordinates(double lat, double lon) {

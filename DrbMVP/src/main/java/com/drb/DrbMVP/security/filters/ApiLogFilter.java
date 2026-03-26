@@ -37,12 +37,22 @@ public class ApiLogFilter extends OncePerRequestFilter {
             return;
         }
 
-        CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+        String contentType = request.getContentType();
+        boolean isMultipart = contentType != null && contentType.toLowerCase().startsWith("multipart/");
+
         long startTime = System.currentTimeMillis();
-        filterChain.doFilter(cachedRequest, response);
+
+        if (isMultipart) {
+            filterChain.doFilter(request, response);
+        } else {
+            CachedBodyHttpServletRequest cachedRequest = new CachedBodyHttpServletRequest(request);
+            filterChain.doFilter(cachedRequest, response);
+            request = cachedRequest;
+        }
+
         long duration = System.currentTimeMillis() - startTime;
 
-        String method = cachedRequest.getMethod();
+        String method = request.getMethod();
         int status = response.getStatus();
 
         String userEmail = null;
@@ -51,8 +61,19 @@ public class ApiLogFilter extends OncePerRequestFilter {
             userEmail = auth.getName();
         }
 
-        String queryParams = cachedRequest.getQueryString();
-        String requestBody = cachedRequest.getBody();
+        String queryParams = request.getQueryString();
+        String requestBody;
+
+        if (isMultipart) {
+            requestBody = "[multipart/form-data - binary content skipped]";
+        } else if (request instanceof CachedBodyHttpServletRequest cachedRequest) {
+            requestBody = cachedRequest.getBody();
+            if (requestBody != null) {
+                requestBody = requestBody.replace("\u0000", "");
+            }
+        } else {
+            requestBody = null;
+        }
 
         try {
             apiLogRepository.save(userEmail, method, path, queryParams, requestBody, status, duration);

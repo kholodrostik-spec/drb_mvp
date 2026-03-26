@@ -10,4 +10,5 @@ public class ReviewDto {
     private Long userId;
     private Double rating;
     private String comment;
+    private String photoS3Key;
 }
