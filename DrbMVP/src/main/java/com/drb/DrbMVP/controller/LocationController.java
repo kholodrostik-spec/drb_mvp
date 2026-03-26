@@ -4,13 +4,17 @@ import com.drb.DrbMVP.dto.location.LocationDto;
 import com.drb.DrbMVP.dto.location.LocationResponseDto;
 import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
+import com.drb.DrbMVP.dto.review.ReviewWithPhotoRequest;
 import com.drb.DrbMVP.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/locations")
@@ -32,12 +36,24 @@ public class LocationController {
         return locationService.addLocation(dto);
     }
 
-    @PostMapping("/reviews")
-    @Operation(
-            summary = "Add or update a review",
-            description = "Adds a rating and comment to a location. One review per user per location."
-    )
-    public ReviewResponseDto addReview(@RequestBody ReviewDto dto) {
-        return locationService.addReview(dto);
+    @PostMapping(value = "/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Add or update a review",
+            description = "Adds a rating and comment to a location. One review per user per location.")
+//    @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+//            schema = @Schema(implementation = ReviewWithPhotoRequest.class)))
+    public ReviewResponseDto addReview(
+            @RequestParam Long locationId,
+            @RequestParam Long userId,
+            @RequestParam Double rating,
+            @RequestParam(required = false) String comment,
+            @RequestParam(required = false) MultipartFile photo
+    ) {
+        ReviewDto dto = new ReviewDto();
+        dto.setLocationId(locationId);
+        dto.setUserId(userId);
+        dto.setRating(rating);
+        dto.setComment(comment);
+
+        return locationService.addReview(dto, photo);
     }
 }

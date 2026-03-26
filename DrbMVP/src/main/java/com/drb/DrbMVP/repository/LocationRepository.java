@@ -5,6 +5,7 @@ import com.drb.DrbMVP.dto.location.LocationResponseDto;
 import com.drb.DrbMVP.dto.location.NearestPointDto;
 import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
+import com.drb.DrbMVP.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -55,25 +56,31 @@ public class LocationRepository {
         );
     }
 
-    public ReviewResponseDto saveReview(ReviewDto dto) {
+    public ReviewResponseDto saveReview(ReviewDto dto, S3Service s3Service) {
         String sql = """
             INSERT INTO reviews (location_id, user_id, rating, comment)
             VALUES (?, ?, ?, ?)
             ON CONFLICT (location_id, user_id)
             DO UPDATE SET rating = EXCLUDED.rating,
-                          comment = EXCLUDED.comment
-            RETURNING location_id, user_id, rating, comment, created_at
+                          comment = EXCLUDED.comment,
+                          photo_s3_key   = EXCLUDED.photo_s3_key
+            RETURNING location_id, user_id, rating, comment, created_at, photo_s3_key
         """;
 
         return jdbcTemplate.queryForObject(sql,
-                (rs, rowNum) -> new ReviewResponseDto(
-                        rs.getLong("location_id"),
-                        rs.getLong("user_id"),
-                        rs.getDouble("rating"),
-                        rs.getString("comment"),
-                        rs.getTimestamp("created_at").toLocalDateTime()
-                ),
-                dto.getLocationId(), dto.getUserId(), dto.getRating(), dto.getComment()
+                (rs, rowNum) -> {
+                    String key = rs.getString("photo_s3_key");
+                    String url = key != null ? s3Service.buildUrl(key) : null;
+                    return new ReviewResponseDto(
+                            rs.getLong("location_id"),
+                            rs.getLong("user_id"),
+                            rs.getDouble("rating"),
+                            rs.getString("comment"),
+                            rs.getTimestamp("created_at").toLocalDateTime(),
+                            url
+                    );
+                },
+                dto.getLocationId(), dto.getUserId(), dto.getRating(), dto.getComment(), dto.getPhotoS3Key()
         );
     }
 

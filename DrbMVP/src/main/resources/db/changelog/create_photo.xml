@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="31-create-user-photos-and-comments" author="rostyslav">
+        <sql>
+            -- Таблиця user_photos
+            CREATE TABLE user_photos (
+            id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            s3_key       VARCHAR(1024) NOT NULL UNIQUE,
+            content_type VARCHAR(100) NOT NULL,
+            file_name    VARCHAR(255) NOT NULL,
+            file_size    BIGINT NOT NULL CHECK (file_size > 0),
+            is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
+            -- Таблиця photo_comments
+            CREATE TABLE photo_comments (
+            id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            photo_id   UUID NOT NULL REFERENCES user_photos(id) ON DELETE CASCADE,
+            user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            body       TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="32-user-photos-and-comments-indexes" author="rostyslav">
+        <sql>
+            CREATE INDEX idx_user_photos_user_id
+            ON user_photos(user_id);
+
+            CREATE INDEX idx_user_photos_is_active
+            ON user_photos(is_active)
+            WHERE is_active = TRUE;
+
+            CREATE INDEX idx_photo_comments_photo_id
+            ON photo_comments(photo_id);
+
+            CREATE INDEX idx_photo_comments_user_id
+            ON photo_comments(user_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="33-user-photos-comments-triggers" author="rostyslav">
+        <sql>
+            -- Функція для updated_at
+            CREATE OR REPLACE FUNCTION set_updated_at()
+            RETURNS TRIGGER LANGUAGE plpgsql AS $$
+            BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+            END;
+            $$;
+
+            -- Тригери
+            CREATE TRIGGER trg_user_photos_updated_at
+            BEFORE UPDATE ON user_photos
+            FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+            CREATE TRIGGER trg_photo_comments_updated_at
+            BEFORE UPDATE ON photo_comments
+            FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

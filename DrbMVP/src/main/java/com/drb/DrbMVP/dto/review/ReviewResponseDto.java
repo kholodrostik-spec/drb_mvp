@@ -13,4 +13,5 @@ public class ReviewResponseDto {
     private Double rating;
     private String comment;
     private LocalDateTime createdAt;
+    private String photoUrl;
 }
