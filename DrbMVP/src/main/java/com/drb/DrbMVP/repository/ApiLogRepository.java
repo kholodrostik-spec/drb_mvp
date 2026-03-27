@@ -19,4 +19,13 @@ public class ApiLogRepository {
         """;
         jdbcTemplate.update(sql, userEmail, method, path, query_params, request_body, status, durationMs);
     }
+
+    public void deleteById(Long id) {
+        String sql = "DELETE FROM api_logs WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    public void deleteAll() {
+        jdbcTemplate.update("DELETE FROM api_logs");
+    }
 }

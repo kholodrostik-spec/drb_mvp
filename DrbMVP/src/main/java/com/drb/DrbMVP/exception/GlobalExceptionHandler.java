@@ -3,6 +3,7 @@ package com.drb.DrbMVP.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -56,5 +57,11 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public Map<String, String> handleEmptyResult(EmptyResultDataAccessException e) {
         return Map.of("error", "Resource not found");
+    }
+
+    @ExceptionHandler(UnauthorizedDeletionException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorizedDeletion(UnauthorizedDeletionException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage()));
     }
 }
