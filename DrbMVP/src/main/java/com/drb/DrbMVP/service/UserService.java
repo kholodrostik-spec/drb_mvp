@@ -1,10 +1,14 @@
 package com.drb.DrbMVP.service;
 
+import com.drb.DrbMVP.constant.AppConstant;
 import com.drb.DrbMVP.dto.user.LoginDto;
 import com.drb.DrbMVP.dto.user.RegisterDto;
 import com.drb.DrbMVP.dto.user.TokenResponseDto;
+import com.drb.DrbMVP.exception.UnauthorizedDeletionException;
 import com.drb.DrbMVP.repository.UserRepository;
 import com.drb.DrbMVP.service.service_api.EmailService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -64,5 +68,25 @@ public class UserService {
                 dto.getEmail(),
                 (String) user.get("role")
         );
+    }
+
+    public void deleteUser(Long targetId) {
+        if (!userRepository.existsById(targetId)) {
+            throw new IllegalArgumentException("User with id " + targetId + " does not exist");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentEmail = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(AppConstant.ROLE_ADMIN));
+
+        if (!isAdmin) {
+            Long currentUserId = userRepository.findIdByEmail(currentEmail);
+            if (!currentUserId.equals(targetId)) {
+                throw new UnauthorizedDeletionException(currentUserId, targetId);
+            }
+        }
+
+        userRepository.deleteById(targetId);
     }
 }

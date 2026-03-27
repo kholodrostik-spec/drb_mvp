@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -55,5 +56,38 @@ public class LocationController {
         dto.setComment(comment);
 
         return locationService.addReview(dto, photo);
+    }
+
+    @DeleteMapping("/reviews/photo")
+    @Operation(
+            summary = "Delete review photo",
+            description = "Deletes photo from S3 and cleans up link in review"
+    )
+    public ResponseEntity<Void> deleteReviewPhoto(
+            @RequestParam Long locationId,
+            @RequestParam Long userId
+    ) {
+        locationService.deleteReviewPhoto(locationId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/reviews/comment")
+    @Operation(summary = "Delete review comment")
+    public ResponseEntity<Void> deleteReviewComment(
+            @RequestParam Long locationId,
+            @RequestParam Long userId
+    ) {
+        locationService.deleteReviewComment(locationId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/reviews/rating")
+    @Operation(summary = "Delete review rating")
+    public ResponseEntity<Void> deleteReviewRating(
+            @RequestParam Long locationId,
+            @RequestParam Long userId
+    ) {
+        locationService.deleteReviewRating(locationId, userId);
+        return ResponseEntity.noContent().build();
     }
 }

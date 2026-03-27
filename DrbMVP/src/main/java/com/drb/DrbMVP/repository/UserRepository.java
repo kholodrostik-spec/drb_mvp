@@ -43,4 +43,20 @@ public class UserRepository {
         int updated = jdbcTemplate.update(sql, userId);
         return updated > 0;
     }
+
+    public void deleteById(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(*) FROM users WHERE id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, id);
+        return count != null && count > 0;
+    }
+
+    public Long findIdByEmail(String email) {
+        String sql = "SELECT id FROM users WHERE email = ?";
+        return jdbcTemplate.queryForObject(sql, Long.class, email);
+    }
 }

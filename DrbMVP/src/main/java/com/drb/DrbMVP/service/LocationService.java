@@ -60,4 +60,20 @@ public class LocationService {
             throw new IllegalArgumentException("Coordinates must be within Ireland");
         }
     }
+
+    public void deleteReviewPhoto(Long locationId, Long userId) {
+        String s3Key = locationRepository.getPhotoS3Key(locationId, userId);
+        if (s3Key != null) {
+            s3Service.delete(s3Key);
+            locationRepository.clearPhoto(locationId, userId);
+        }
+    }
+
+    public void deleteReviewComment(Long locationId, Long userId) {
+        locationRepository.clearComment(locationId, userId);
+    }
+
+    public void deleteReviewRating(Long locationId, Long userId) {
+        locationRepository.clearRating(locationId, userId);
+    }
 }

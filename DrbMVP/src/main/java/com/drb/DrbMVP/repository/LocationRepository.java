@@ -95,4 +95,33 @@ public class LocationRepository {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, locationId);
         return count != null && count > 0;
     }
+
+    public String getPhotoS3Key(Long locationId, Long userId) {
+        String sql = "SELECT photo_s3_key FROM reviews WHERE location_id = ? AND user_id = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, locationId, userId);
+    }
+
+    public void clearPhoto(Long locationId, Long userId) {
+        String sql = """
+        UPDATE reviews SET photo_s3_key = NULL
+        WHERE location_id = ? AND user_id = ?
+    """;
+        jdbcTemplate.update(sql, locationId, userId);
+    }
+
+    public void clearComment(Long locationId, Long userId) {
+        String sql = """
+        UPDATE reviews SET comment = NULL
+        WHERE location_id = ? AND user_id = ?
+    """;
+        jdbcTemplate.update(sql, locationId, userId);
+    }
+
+    public void clearRating(Long locationId, Long userId) {
+        String sql = """
+        UPDATE reviews SET rating = NULL
+        WHERE location_id = ? AND user_id = ?
+    """;
+        jdbcTemplate.update(sql, locationId, userId);
+    }
 }
