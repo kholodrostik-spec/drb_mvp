@@ -1,7 +1,7 @@
 # DrbMVP
 
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-brightgreen)
-![Java](https://img.shields.io/badge/Java-17-orange)
+![Java](https://img.shields.io/badge/Java-21-orange)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)
 ![AWS S3](https://img.shields.io/badge/AWS-S3-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
