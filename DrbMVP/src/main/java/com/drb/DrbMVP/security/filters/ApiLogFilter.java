@@ -84,6 +84,7 @@ public class ApiLogFilter extends OncePerRequestFilter {
 
     private boolean shouldSkip(String path) {
         return path.startsWith("/api/auth/") ||
+                path.startsWith("/api/auth/") ||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/swagger-resources");
