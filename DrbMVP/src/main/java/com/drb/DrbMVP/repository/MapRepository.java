@@ -54,64 +54,104 @@ public class MapRepository {
 
         try {
             String nearestNodeSql = """
-            SELECT id
-            FROM main_vertices
-            ORDER BY geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
-            LIMIT 1
+            WITH closest_edge AS (
+                 SELECT rn.source, rn.target, rn.geom
+                 FROM road_network rn
+                 WHERE rn.highway IN (
+                     'primary', 'primary_link',
+                     'secondary', 'secondary_link',
+                     'tertiary', 'tertiary_link',
+                     'unclassified', 'residential'
+                 )
+                 ORDER BY rn.geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                 LIMIT 20
+             ),
+             best_edge AS (
+                 SELECT source, target
+                 FROM closest_edge
+                 ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
+                 LIMIT 1
+             )
+             SELECT\s
+                 CASE\s
+                     WHEN ST_Distance(
+                         (SELECT geom FROM routable_vertices WHERE id = be.source),
+                         ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                     ) < ST_Distance(
+                         (SELECT geom FROM routable_vertices WHERE id = be.target),
+                         ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                     )
+                     THEN be.source
+                     ELSE be.target
+                 END AS id
+             FROM best_edge be
         """;
 
             Long sourceNode = jdbcTemplate.queryForObject(
-                    nearestNodeSql, Long.class, lonFrom, latFrom);
+                    nearestNodeSql, Long.class, lonFrom, latFrom, lonFrom, latFrom, lonFrom, latFrom, lonFrom, latFrom);
             Long targetNode = jdbcTemplate.queryForObject(
-                    nearestNodeSql, Long.class, lonTo, latTo);
+                    nearestNodeSql, Long.class, lonTo, latTo, lonTo, latTo, lonTo, latTo, lonTo, latTo);
 
             log.info("Source node: {}, Target node: {}", sourceNode, targetNode);
 
             String routeSql = """
-            WITH route AS (
-            SELECT
-                SUM(r.cost) AS road_cost,
-                ST_Union(rn.geom) AS route_geom
-            FROM pgr_dijkstra(
-                'SELECT rid AS id, source, target, cost, reverse_cost FROM road_network',
-                ?, ?, true
-            ) r
-            JOIN road_network rn ON r.edge = rn.rid
-            WHERE r.edge != -1
-        ),
-        snap_start AS (
-            SELECT
-                ST_Distance(
-                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
-                    v.geom::geography
-                ) AS dist,
-                ST_MakeLine(
-                    ST_SetSRID(ST_MakePoint(?, ?), 4326),
-                    v.geom
-                ) AS geom
-            FROM main_vertices v WHERE v.id = ?
-        ),
-        snap_end AS (
-            SELECT
-                ST_Distance(
-                    ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
-                    v.geom::geography
-                ) AS dist,
-                ST_MakeLine(
-                    v.geom,
-                    ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                ) AS geom
-            FROM main_vertices v WHERE v.id = ?
-        )
-        SELECT
-            route.road_cost + snap_start.dist + snap_end.dist AS total_cost,
-            route.road_cost,
-            snap_start.dist AS snap_start_cost,
-            snap_end.dist   AS snap_end_cost,
-            ST_AsGeoJSON(route.route_geom)    AS route_geojson,
-            ST_AsGeoJSON(snap_start.geom)     AS snap_start_geojson,
-            ST_AsGeoJSON(snap_end.geom)       AS snap_end_geojson
-        FROM route, snap_start, snap_end
+                WITH route AS (
+                    SELECT
+                        SUM(r.cost) AS road_cost,
+                        ST_MakeLine(
+                            CASE WHEN r.node = rn.source\s
+                                 THEN rn.geom\s
+                                 ELSE ST_Reverse(rn.geom)\s
+                            END
+                            ORDER BY r.seq
+                        ) AS route_geom
+                    FROM pgr_dijkstra(
+                        'SELECT rid AS id, source, target, cost, reverse_cost
+                         FROM road_network
+                         WHERE highway NOT IN (
+                             ''footway'', ''cycleway'', ''path'', ''steps'',
+                             ''pedestrian'', ''track'', ''bridleway'', ''corridor'',
+                             ''platform'', ''construction'', ''proposed'', ''raceway'',
+                             ''escape'', ''ladder'', ''bus_stop''
+                         )',
+                        ?, ?, true
+                    ) r
+                    JOIN road_network rn ON r.edge = rn.rid
+                    WHERE r.edge != -1
+                ),
+                snap_start AS (
+                    SELECT
+                        ST_Distance(
+                            ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                            v.geom::geography
+                        ) AS dist,
+                        ST_MakeLine(
+                            ST_SetSRID(ST_MakePoint(?, ?), 4326),
+                            v.geom
+                        ) AS geom
+                    FROM routable_vertices v WHERE v.id = ?
+                ),
+                snap_end AS (
+                    SELECT
+                        ST_Distance(
+                            ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+                            v.geom::geography
+                        ) AS dist,
+                        ST_MakeLine(
+                            v.geom,
+                            ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                        ) AS geom
+                    FROM routable_vertices v WHERE v.id = ?
+                )
+                SELECT
+                    route.road_cost + snap_start.dist + snap_end.dist AS total_cost,
+                    route.road_cost,
+                    snap_start.dist AS snap_start_cost,
+                    snap_end.dist   AS snap_end_cost,
+                    ST_AsGeoJSON(route.route_geom)    AS route_geojson,
+                    ST_AsGeoJSON(snap_start.geom)     AS snap_start_geojson,
+                    ST_AsGeoJSON(snap_end.geom)       AS snap_end_geojson
+                FROM route, snap_start, snap_end
         """;
 
             return jdbcTemplate.queryForObject(routeSql,

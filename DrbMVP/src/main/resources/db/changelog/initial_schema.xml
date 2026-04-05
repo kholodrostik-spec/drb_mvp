@@ -100,4 +100,76 @@
         </sql>
     </changeSet>
 
+    <changeSet id="31-fix-road-network-oneway" author="rostyslav">
+        <sql>
+            ALTER TABLE road_network ADD COLUMN IF NOT EXISTS oneway TEXT;
+
+            CREATE INDEX IF NOT EXISTS idx_road_network_id
+            ON road_network USING btree(id);
+
+            CREATE INDEX IF NOT EXISTS idx_planet_osm_line_osm_id
+            ON planet_osm_line USING btree(osm_id);
+
+            UPDATE road_network rn
+            SET oneway = pol.oneway
+            FROM planet_osm_line pol
+            WHERE pol.osm_id = rn.id;
+
+            UPDATE road_network
+            SET reverse_cost = 1000000
+            WHERE oneway = 'yes';
+
+            UPDATE road_network
+            SET
+            cost = reverse_cost,
+            reverse_cost = 1000000
+            WHERE oneway = '-1';
+        </sql>
+    </changeSet>
+
+    <changeSet id="32-rebuild-main-vertices" author="rostyslav">
+        <sql>
+            DROP TABLE IF EXISTS main_vertices;
+
+            CREATE TABLE main_vertices AS
+            SELECT
+            row_number() OVER () AS id,
+            geom
+            FROM (
+            SELECT DISTINCT ST_StartPoint(geom) AS geom FROM road_network
+            UNION
+            SELECT DISTINCT ST_EndPoint(geom) AS geom FROM road_network
+            ) pts;
+
+            ALTER TABLE main_vertices ADD PRIMARY KEY (id);
+            CREATE INDEX idx_main_vertices_geom ON main_vertices USING GIST(geom);
+
+            UPDATE road_network rn
+            SET source = mv.id
+            FROM main_vertices mv
+            WHERE ST_DWithin(ST_StartPoint(rn.geom), mv.geom, 0.000001);
+
+            UPDATE road_network rn
+            SET target = mv.id
+            FROM main_vertices mv
+            WHERE ST_DWithin(ST_EndPoint(rn.geom), mv.geom, 0.000001);
+        </sql>
+    </changeSet>
+
+    <changeSet id="33-create-main-component-vertices" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS main_component_vertices;
+
+            CREATE TABLE main_component_vertices AS
+            SELECT mv.id, mv.geom
+            FROM main_vertices mv
+            JOIN pgr_connectedComponents(
+            'SELECT rid AS id, source, target, cost, reverse_cost FROM road_network'
+            ) cc ON cc.node = mv.id
+            WHERE cc.component = 11;
+
+            CREATE INDEX idx_main_component_geom ON main_component_vertices USING GIST(geom);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
