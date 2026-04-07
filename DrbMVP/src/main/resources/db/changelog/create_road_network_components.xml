@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="38-create-road-network-components" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS road_network_components;
+
+            CREATE TABLE road_network_components AS
+            SELECT *
+            FROM pgr_connectedComponents(
+            'SELECT rid AS id, source, target, cost, reverse_cost
+            FROM road_network'
+            );
+
+            CREATE INDEX idx_road_network_components_node
+            ON road_network_components(node);
+
+            CREATE INDEX idx_road_network_components_component
+            ON road_network_components(component);
+        </sql>
+    </changeSet>
+
+    <changeSet id="39-create-main-component-edges" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS main_component_edges;
+
+            CREATE TABLE main_component_edges AS
+            SELECT rn.*
+            FROM road_network rn
+            JOIN road_network_components c1 ON rn.source = c1.node
+            JOIN road_network_components c2 ON rn.target = c2.node
+            WHERE c1.component = 11
+            AND c2.component = 11;
+
+            CREATE INDEX idx_main_component_edges_geom
+            ON main_component_edges
+            USING GIST (geom);
+
+            CREATE INDEX idx_main_component_edges_source
+            ON main_component_edges(source);
+
+            CREATE INDEX idx_main_component_edges_target
+            ON main_component_edges(target);
+
+            CREATE INDEX idx_main_component_edges_highway
+            ON main_component_edges(highway);
+        </sql>
+    </changeSet>
+
+    <changeSet id="40-create-routable-vertices" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS routable_vertices;
+
+            CREATE TABLE routable_vertices AS
+            WITH source_points AS (
+            SELECT
+            source::bigint AS id,
+            ST_StartPoint(geom) AS geom
+            FROM main_component_edges
+            WHERE source IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            target_points AS (
+            SELECT
+            target::bigint AS id,
+            ST_EndPoint(geom) AS geom
+            FROM main_component_edges
+            WHERE target IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            all_points AS (
+            SELECT * FROM source_points
+            UNION ALL
+            SELECT * FROM target_points
+            )
+            SELECT DISTINCT ON (id)
+            id,
+            geom
+            FROM all_points
+            ORDER BY id;
+
+            CREATE INDEX idx_routable_vertices_geom
+            ON routable_vertices USING GIST (geom);
+
+            CREATE UNIQUE INDEX idx_routable_vertices_id
+            ON routable_vertices(id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

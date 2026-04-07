@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="35-create-walk-network-components" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS walk_network_components;
+
+            CREATE TABLE walk_network_components AS
+            SELECT *
+            FROM pgr_connectedComponents(
+            'SELECT rid AS id, source, target, cost, reverse_cost
+            FROM road_network
+            WHERE highway IN (
+            ''footway'', ''path'', ''pedestrian'', ''steps'',
+            ''living_street'', ''residential'', ''service'',
+            ''track'', ''cycleway'',
+            ''secondary'', ''secondary_link'',
+            ''tertiary'', ''tertiary_link'',
+            ''unclassified'', ''primary'', ''primary_link''
+            )'
+            );
+
+            CREATE INDEX idx_walk_network_components_node
+            ON walk_network_components(node);
+
+            CREATE INDEX idx_walk_network_components_component
+            ON walk_network_components(component);
+        </sql>
+    </changeSet>
+
+    <changeSet id="36-create-walk-main-component-edges" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS walk_main_component_edges;
+
+            CREATE TABLE walk_main_component_edges AS
+            SELECT rn.*
+            FROM road_network rn
+            JOIN walk_network_components c1 ON rn.source = c1.node
+            JOIN walk_network_components c2 ON rn.target = c2.node
+            WHERE c1.component = (
+            SELECT component
+            FROM walk_network_components
+            GROUP BY component
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            )
+            AND c2.component = (
+            SELECT component
+            FROM walk_network_components
+            GROUP BY component
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            )
+            AND rn.highway IN (
+            'footway', 'path', 'pedestrian', 'steps',
+            'living_street', 'residential', 'service',
+            'track', 'cycleway',
+            'secondary', 'secondary_link',
+            'tertiary', 'tertiary_link',
+            'unclassified', 'primary', 'primary_link'
+            );
+
+            CREATE INDEX idx_walk_main_component_edges_geom
+            ON walk_main_component_edges
+            USING GIST (geom);
+
+            CREATE INDEX idx_walk_main_component_edges_source
+            ON walk_main_component_edges(source);
+
+            CREATE INDEX idx_walk_main_component_edges_target
+            ON walk_main_component_edges(target);
+
+            CREATE INDEX idx_walk_main_component_edges_highway
+            ON walk_main_component_edges(highway);
+        </sql>
+    </changeSet>
+
+    <changeSet id="37-create-walk-routable-vertices" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS walk_routable_vertices;
+
+            CREATE TABLE walk_routable_vertices AS
+            WITH source_points AS (
+            SELECT
+            source::bigint AS id,
+            ST_StartPoint(geom) AS geom
+            FROM walk_main_component_edges
+            WHERE source IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            target_points AS (
+            SELECT
+            target::bigint AS id,
+            ST_EndPoint(geom) AS geom
+            FROM walk_main_component_edges
+            WHERE target IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            all_points AS (
+            SELECT * FROM source_points
+            UNION ALL
+            SELECT * FROM target_points
+            )
+            SELECT DISTINCT ON (id)
+            id,
+            geom
+            FROM all_points
+            ORDER BY id;
+
+            CREATE INDEX idx_walk_routable_vertices_geom
+            ON walk_routable_vertices
+            USING GIST (geom);
+
+            CREATE UNIQUE INDEX idx_walk_routable_vertices_id
+            ON walk_routable_vertices(id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
