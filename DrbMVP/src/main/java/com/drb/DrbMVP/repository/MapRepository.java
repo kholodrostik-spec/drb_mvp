@@ -54,37 +54,45 @@ public class MapRepository {
 
         try {
             String nearestNodeSql = """
-            WITH closest_edge AS (
-                 SELECT rn.source, rn.target, rn.geom
-                 FROM road_network rn
-                 WHERE rn.highway IN (
-                     'primary', 'primary_link',
-                     'secondary', 'secondary_link',
-                     'tertiary', 'tertiary_link',
-                     'unclassified', 'residential'
-                 )
-                 ORDER BY rn.geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                 LIMIT 20
-             ),
-             best_edge AS (
-                 SELECT source, target
-                 FROM closest_edge
-                 ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
-                 LIMIT 1
-             )
-             SELECT\s
-                 CASE\s
-                     WHEN ST_Distance(
-                         (SELECT geom FROM routable_vertices WHERE id = be.source),
-                         ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                     ) < ST_Distance(
-                         (SELECT geom FROM routable_vertices WHERE id = be.target),
-                         ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                     )
-                     THEN be.source
-                     ELSE be.target
-                 END AS id
-             FROM best_edge be
+            WITH main_component_nodes AS (
+               SELECT node
+               FROM road_network_components
+               WHERE component = 11
+           ),
+           closest_edge AS (
+               SELECT rn.source, rn.target, rn.geom
+               FROM road_network rn
+               JOIN main_component_nodes ms
+                 ON rn.source = ms.node OR rn.target = ms.node
+               WHERE rn.highway IN (
+                   'primary', 'primary_link',
+                   'secondary', 'secondary_link',
+                   'tertiary', 'tertiary_link',
+                   'unclassified', 'residential',
+                   'service'
+               )
+               ORDER BY rn.geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+               LIMIT 20
+           ),
+           best_edge AS (
+               SELECT source, target, geom
+               FROM closest_edge
+               ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
+               LIMIT 1
+           )
+           SELECT
+               CASE
+                   WHEN ST_Distance(
+                       (SELECT geom FROM routable_vertices WHERE id = be.source),
+                       ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                   ) < ST_Distance(
+                       (SELECT geom FROM routable_vertices WHERE id = be.target),
+                       ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                   )
+                   THEN be.source
+                   ELSE be.target
+               END AS id
+           FROM best_edge be
         """;
 
             Long sourceNode = jdbcTemplate.queryForObject(

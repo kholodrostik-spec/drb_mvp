@@ -172,4 +172,44 @@
         </sql>
     </changeSet>
 
+    <changeSet id="34-create-routable-vertices" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS routable_vertices;
+
+            CREATE TABLE routable_vertices AS
+            WITH source_points AS (
+            SELECT
+            source::bigint AS id,
+            ST_StartPoint(geom) AS geom
+            FROM road_network
+            WHERE source IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            target_points AS (
+            SELECT
+            target::bigint AS id,
+            ST_EndPoint(geom) AS geom
+            FROM road_network
+            WHERE target IS NOT NULL
+            AND geom IS NOT NULL
+            ),
+            all_points AS (
+            SELECT * FROM source_points
+            UNION ALL
+            SELECT * FROM target_points
+            )
+            SELECT DISTINCT ON (id)
+            id,
+            geom
+            FROM all_points
+            ORDER BY id;
+
+            CREATE INDEX idx_routable_vertices_geom
+            ON routable_vertices USING GIST (geom);
+
+            CREATE UNIQUE INDEX idx_routable_vertices_id
+            ON routable_vertices (id);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
