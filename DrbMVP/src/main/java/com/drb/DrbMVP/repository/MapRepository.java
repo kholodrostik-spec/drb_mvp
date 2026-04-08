@@ -54,45 +54,31 @@ public class MapRepository {
 
         try {
             String nearestNodeSql = """
-            WITH main_component_nodes AS (
-               SELECT node
-               FROM road_network_components
-               WHERE component = 11
-           ),
-           closest_edge AS (
-               SELECT rn.source, rn.target, rn.geom
-               FROM road_network rn
-               JOIN main_component_nodes ms
-                 ON rn.source = ms.node OR rn.target = ms.node
-               WHERE rn.highway IN (
-                   'primary', 'primary_link',
-                   'secondary', 'secondary_link',
-                   'tertiary', 'tertiary_link',
-                   'unclassified', 'residential',
-                   'service'
-               )
-               ORDER BY rn.geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
-               LIMIT 20
-           ),
-           best_edge AS (
-               SELECT source, target, geom
-               FROM closest_edge
-               ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
-               LIMIT 1
-           )
-           SELECT
-               CASE
-                   WHEN ST_Distance(
-                       (SELECT geom FROM routable_vertices WHERE id = be.source),
-                       ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                   ) < ST_Distance(
-                       (SELECT geom FROM routable_vertices WHERE id = be.target),
-                       ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                   )
-                   THEN be.source
-                   ELSE be.target
-               END AS id
-           FROM best_edge be
+            WITH closest_edge AS (
+                SELECT rn.source, rn.target, rn.geom
+                FROM walk_main_component_edges rn
+                ORDER BY rn.geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                LIMIT 20
+            ),
+            best_edge AS (
+                SELECT source, target, geom
+                FROM closest_edge
+                ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
+                LIMIT 1
+            )
+            SELECT
+                CASE
+                    WHEN ST_Distance(
+                        (SELECT geom FROM walk_routable_vertices WHERE id = be.source),
+                        ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                    ) < ST_Distance(
+                        (SELECT geom FROM walk_routable_vertices WHERE id = be.target),
+                        ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                    )
+                    THEN be.source
+                    ELSE be.target
+                END AS id
+            FROM best_edge be
         """;
 
             Long sourceNode = jdbcTemplate.queryForObject(
@@ -107,24 +93,35 @@ public class MapRepository {
                     SELECT
                         SUM(r.cost) AS road_cost,
                         ST_MakeLine(
-                            CASE WHEN r.node = rn.source\s
-                                 THEN rn.geom\s
-                                 ELSE ST_Reverse(rn.geom)\s
+                            CASE
+                                WHEN r.node = rn.source THEN rn.geom
+                                ELSE ST_Reverse(rn.geom)
                             END
                             ORDER BY r.seq
                         ) AS route_geom
                     FROM pgr_dijkstra(
-                        'SELECT rid AS id, source, target, cost, reverse_cost
-                         FROM road_network
-                         WHERE highway NOT IN (
-                             ''footway'', ''cycleway'', ''path'', ''steps'',
-                             ''pedestrian'', ''track'', ''bridleway'', ''corridor'',
-                             ''platform'', ''construction'', ''proposed'', ''raceway'',
-                             ''escape'', ''ladder'', ''bus_stop''
-                         )',
+                        'SELECT
+                            rid AS id,
+                            source,
+                            target,
+                            CASE
+                                WHEN highway IN (''footway'', ''path'', ''pedestrian'', ''steps'') THEN cost
+                                WHEN highway IN (''living_street'', ''residential'', ''service'', ''unclassified'') THEN cost * 1.3
+                                WHEN highway IN (''tertiary'', ''tertiary_link'', ''secondary'', ''secondary_link'') THEN cost * 1.8
+                                WHEN highway IN (''primary'', ''primary_link'') THEN cost * 2.5
+                                ELSE -1
+                            END AS cost,
+                            CASE
+                                WHEN highway IN (''footway'', ''path'', ''pedestrian'', ''steps'') THEN reverse_cost
+                                WHEN highway IN (''living_street'', ''residential'', ''service'', ''unclassified'') THEN reverse_cost * 1.3
+                                WHEN highway IN (''tertiary'', ''tertiary_link'', ''secondary'', ''secondary_link'') THEN reverse_cost * 1.8
+                                WHEN highway IN (''primary'', ''primary_link'') THEN reverse_cost * 2.5
+                                ELSE -1
+                            END AS reverse_cost
+                         FROM walk_main_component_edges',
                         ?, ?, true
                     ) r
-                    JOIN road_network rn ON r.edge = rn.rid
+                    JOIN walk_main_component_edges rn ON r.edge = rn.rid
                     WHERE r.edge != -1
                 ),
                 snap_start AS (
@@ -137,7 +134,8 @@ public class MapRepository {
                             ST_SetSRID(ST_MakePoint(?, ?), 4326),
                             v.geom
                         ) AS geom
-                    FROM routable_vertices v WHERE v.id = ?
+                    FROM walk_routable_vertices v
+                    WHERE v.id = ?
                 ),
                 snap_end AS (
                     SELECT
@@ -149,16 +147,17 @@ public class MapRepository {
                             v.geom,
                             ST_SetSRID(ST_MakePoint(?, ?), 4326)
                         ) AS geom
-                    FROM routable_vertices v WHERE v.id = ?
+                    FROM walk_routable_vertices v
+                    WHERE v.id = ?
                 )
                 SELECT
                     route.road_cost + snap_start.dist + snap_end.dist AS total_cost,
                     route.road_cost,
                     snap_start.dist AS snap_start_cost,
-                    snap_end.dist   AS snap_end_cost,
-                    ST_AsGeoJSON(route.route_geom)    AS route_geojson,
-                    ST_AsGeoJSON(snap_start.geom)     AS snap_start_geojson,
-                    ST_AsGeoJSON(snap_end.geom)       AS snap_end_geojson
+                    snap_end.dist AS snap_end_cost,
+                    ST_AsGeoJSON(route.route_geom) AS route_geojson,
+                    ST_AsGeoJSON(snap_start.geom) AS snap_start_geojson,
+                    ST_AsGeoJSON(snap_end.geom) AS snap_end_geojson
                 FROM route, snap_start, snap_end
         """;
 
