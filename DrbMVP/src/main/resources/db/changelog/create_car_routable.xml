@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="41-create-car-routable-vertices" author="rostyslav" runInTransaction="false">
+        <sql>
+            DROP TABLE IF EXISTS car_routable_vertices;
+
+            CREATE TABLE car_routable_vertices AS
+            WITH source_points AS (
+            SELECT source::bigint AS id, ST_StartPoint(geom) AS geom
+            FROM car_main_component_edges
+            WHERE source IS NOT NULL AND geom IS NOT NULL
+            ),
+            target_points AS (
+            SELECT target::bigint AS id, ST_EndPoint(geom) AS geom
+            FROM car_main_component_edges
+            WHERE target IS NOT NULL AND geom IS NOT NULL
+            ),
+            all_points AS (
+            SELECT * FROM source_points
+            UNION ALL
+            SELECT * FROM target_points
+            )
+            SELECT DISTINCT ON (id)
+            id,
+            geom
+            FROM all_points
+            ORDER BY id;
+
+            DROP INDEX IF EXISTS idx_car_routable_vertices_geom;
+            DROP INDEX IF EXISTS idx_car_routable_vertices_id;
+
+            CREATE INDEX idx_car_routable_vertices_geom
+            ON car_routable_vertices USING GIST (geom);
+
+            CREATE UNIQUE INDEX idx_car_routable_vertices_id
+            ON car_routable_vertices(id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

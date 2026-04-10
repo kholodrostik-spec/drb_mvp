@@ -1,14 +1,17 @@
 package com.drb.DrbMVP.service;
 
 import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.route.FastestRouteResponseDto;
 import com.drb.DrbMVP.dto.route.RouteDto;
 import com.drb.DrbMVP.repository.MapRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 public class MapService {
 
     private final MapRepository mapRepository;
+    private final WebClient webClient;
 
     private static final double[][] IRELAND_POLYGON = {
             {55.4, -8.2}, {55.3, -6.2}, {54.0, -5.9}, {52.8, -6.0},
@@ -16,8 +19,9 @@ public class MapService {
             {54.5, -10.0}, {55.2, -7.6}
     };
 
-    public MapService(MapRepository mapRepository) {
+    public MapService(MapRepository mapRepository, WebClient webClient) {
         this.mapRepository = mapRepository;
+        this.webClient = webClient;
     }
 
     public NearestPointDto findNearestRoad(double lat, double lon) {
@@ -47,5 +51,22 @@ public class MapService {
         validateCoordinates(latFrom, lonFrom);
         validateCoordinates(latTo, lonTo);
         return mapRepository.findShortestRoute(latFrom, lonFrom, latTo, lonTo);
+    }
+
+    public FastestRouteResponseDto getFastestRoute(Long startId, Long endId, String transport) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("http")
+                        .host("localhost")
+                        .port(8000)
+                        .path("/api/routes/fastest")
+                        .queryParam("start_id", startId)
+                        .queryParam("end_id", endId)
+                        .queryParam("transport", transport)
+                        .build()
+                )
+                .retrieve()
+                .bodyToMono(FastestRouteResponseDto.class)
+                .block();
     }
 }

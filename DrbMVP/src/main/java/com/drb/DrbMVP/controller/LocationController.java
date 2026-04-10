@@ -25,6 +25,15 @@ public class LocationController {
         this.locationService = locationService;
     }
 
+    @GetMapping("/nearest")
+    @Operation(summary = "Find nearest location")
+    public LocationResponseDto findNearestLocation(
+            @RequestParam("lat") double lat,
+            @RequestParam("lon") double lon
+    ) {
+        return locationService.findNearestLocation(lat, lon);
+    }
+
     @PostMapping
     @Operation(
             summary = "Add a new location",
@@ -37,8 +46,6 @@ public class LocationController {
     @PostMapping(value = "/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Add or update a review",
             description = "Adds a rating and comment to a location. One review per user per location.")
-//    @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-//            schema = @Schema(implementation = ReviewWithPhotoRequest.class)))
     public ReviewResponseDto addReview(
             @RequestParam("locationId") Long locationId,
             @RequestParam("userId") Long userId,

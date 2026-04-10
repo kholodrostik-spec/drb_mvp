@@ -10,7 +10,7 @@
             -- Таблиця user_photos
             CREATE TABLE user_photos (
             id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id      BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             s3_key       VARCHAR(1024) NOT NULL UNIQUE,
             content_type VARCHAR(100) NOT NULL,
             file_name    VARCHAR(255) NOT NULL,
@@ -24,7 +24,7 @@
             CREATE TABLE photo_comments (
             id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             photo_id   UUID NOT NULL REFERENCES user_photos(id) ON DELETE CASCADE,
-            user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id    BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             body       TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -50,15 +50,14 @@
     </changeSet>
 
     <changeSet id="33-user-photos-comments-triggers" author="rostyslav">
-        <sql>
+        <sql splitStatements="false">
             -- Функція для updated_at
             CREATE OR REPLACE FUNCTION set_updated_at()
             RETURNS TRIGGER LANGUAGE plpgsql AS $$
             BEGIN
             NEW.updated_at = NOW();
             RETURN NEW;
-            END;
-            $$;
+            END$$;
 
             -- Тригери
             CREATE TRIGGER trg_user_photos_updated_at

@@ -1,7 +1,10 @@
 package com.drb.DrbMVP.controller;
 
 import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.route.AiRouteResponseDto;
+import com.drb.DrbMVP.dto.route.FastestRouteResponseDto;
 import com.drb.DrbMVP.dto.route.RouteDto;
+import com.drb.DrbMVP.service.CarRoutingService;
 import com.drb.DrbMVP.service.MapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MapController {
 
     private final MapService mapService;
+    private final CarRoutingService carRoutingService;
 
-    public MapController(MapService mapService) {
+    public MapController(MapService mapService, CarRoutingService carRoutingService) {
         this.mapService = mapService;
+        this.carRoutingService = carRoutingService;
     }
 
     @GetMapping("/nearest")
@@ -50,5 +55,20 @@ public class MapController {
             @Parameter(description = "Longitude of end point", example = "-6.2603")
             @RequestParam double lonTo) {
         return mapService.findShortestRoute(latFrom, lonFrom, latTo, lonTo);
+    }
+
+    @GetMapping("/ai-route")
+    @Operation(
+            summary = "Find personalized car route",
+            description = "Builds multiple candidate routes and selects the best one based on user preferences"
+    )
+    public AiRouteResponseDto getAiRoute(
+            @Parameter(description = "User ID for loading preferences", example = "1")
+            @RequestParam Long userId,
+            @Parameter(example = "53.2707") @RequestParam double latFrom,
+            @Parameter(example = "-9.0568") @RequestParam double lonFrom,
+            @Parameter(example = "53.3498") @RequestParam double latTo,
+            @Parameter(example = "-6.2603") @RequestParam double lonTo) {
+        return carRoutingService.findBestRoute(userId, latFrom, lonFrom, latTo, lonTo);
     }
 }
