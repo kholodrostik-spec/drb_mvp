@@ -124,4 +124,41 @@ public class LocationRepository {
     """;
         jdbcTemplate.update(sql, locationId, userId);
     }
+
+    public LocationResponseDto findNearestLocation(double lat, double lon) {
+        String sql = """
+        SELECT
+            l.id,
+            l.name,
+            l.description,
+            l.latitude,
+            l.longitude,
+            l.category,
+            l.is_default,
+            l.nearest_road_name,
+            l.nearest_road_highway,
+            l.nearest_road_distance
+        FROM locations l
+        ORDER BY ST_SetSRID(ST_MakePoint(l.longitude, l.latitude), 4326)
+               <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+        LIMIT 1
+    """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> new LocationResponseDto(
+                        rs.getLong("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getString("category"),
+                        rs.getBoolean("is_default"),
+                        rs.getString("nearest_road_name"),
+                        rs.getString("nearest_road_highway"),
+                        rs.getDouble("nearest_road_distance")
+                ),
+                lon, lat
+        );
+    }
 }

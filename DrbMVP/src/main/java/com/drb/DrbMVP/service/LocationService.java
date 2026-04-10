@@ -76,4 +76,8 @@ public class LocationService {
     public void deleteReviewRating(Long locationId, Long userId) {
         locationRepository.clearRating(locationId, userId);
     }
+
+    public LocationResponseDto findNearestLocation(double lat, double lon) {
+        return locationRepository.findNearestLocation(lat, lon);
+    }
 }

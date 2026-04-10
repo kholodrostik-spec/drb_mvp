@@ -11,5 +11,9 @@
         <include file="db/changelog/create_reviews.xml"/>
         <include file="db/changelog/create_transport_ie.xml"/>
         <include file="db/changelog/create_api_logs.xml"/>
+        <include file="db/changelog/create_walk_network.xml"/>
+        <include file="db/changelog/create_road_network_components.xml"/>
+        <include file="db/changelog/create_photo.xml"/>
+        <include file="db/changelog/create_car_routable.xml"/>
 
 </databaseChangeLog>
