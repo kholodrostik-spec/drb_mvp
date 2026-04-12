@@ -1,8 +1,6 @@
 package com.drb.DrbMVP.service;
 
-import com.drb.DrbMVP.dto.location.LocationDto;
-import com.drb.DrbMVP.dto.location.LocationResponseDto;
-import com.drb.DrbMVP.dto.location.NearestPointDto;
+import com.drb.DrbMVP.dto.location.*;
 import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.repository.LocationRepository;
@@ -10,6 +8,8 @@ import com.drb.DrbMVP.repository.MapRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -79,5 +79,30 @@ public class LocationService {
 
     public LocationResponseDto findNearestLocation(double lat, double lon) {
         return locationRepository.findNearestLocation(lat, lon);
+    }
+
+    public ReviewCheckDto checkExistingReview(double lat, double lon, Long userId) {
+        LocationResponseDto nearest = findNearestLocation(lat, lon);
+        if (nearest == null) {
+            return new ReviewCheckDto(false, null, null, null, null);
+        }
+
+        ReviewCheckResult existing = locationRepository.findExistingReview(nearest.getId(), userId);
+
+        if (existing != null) {
+            return new ReviewCheckDto(
+                    true,
+                    nearest.getId(),
+                    nearest.getName(),
+                    existing.getRating(),
+                    existing.getComment()
+            );
+        }
+
+        return new ReviewCheckDto(false, nearest.getId(), nearest.getName(), null, null);
+    }
+
+    public List<LocationResponseDto> searchByName(String query, int limit) {
+        return locationRepository.searchByName(query, limit);
     }
 }

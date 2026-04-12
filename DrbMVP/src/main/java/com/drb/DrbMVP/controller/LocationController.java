@@ -2,6 +2,7 @@ package com.drb.DrbMVP.controller;
 
 import com.drb.DrbMVP.dto.location.LocationDto;
 import com.drb.DrbMVP.dto.location.LocationResponseDto;
+import com.drb.DrbMVP.dto.location.ReviewCheckDto;
 import com.drb.DrbMVP.dto.review.ReviewDto;
 import com.drb.DrbMVP.dto.review.ReviewResponseDto;
 import com.drb.DrbMVP.service.LocationService;
@@ -12,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -32,6 +35,29 @@ public class LocationController {
             @RequestParam("lon") double lon
     ) {
         return locationService.findNearestLocation(lat, lon);
+    }
+
+    @GetMapping("/review-check")
+    @Operation(
+            summary = "Check if user already reviewed the nearest location",
+            description = "Finds nearest location to coordinates, then checks if the user has an existing review. "
+                    + "Returns hasReview=true with existing rating/comment if found."
+    )
+    public ReviewCheckDto checkExistingReview(
+            @RequestParam("lat") double lat,
+            @RequestParam("lon") double lon,
+            @RequestParam("userId") Long userId
+    ) {
+        return locationService.checkExistingReview(lat, lon, userId);
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Search locations by name")
+    public List<LocationResponseDto> searchLocations(
+            @RequestParam("q") String query,
+            @RequestParam(value = "limit", defaultValue = "5") int limit
+    ) {
+        return locationService.searchByName(query, limit);
     }
 
     @PostMapping
