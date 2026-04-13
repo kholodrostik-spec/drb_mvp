@@ -2,14 +2,13 @@ package com.drb.DrbMVP.service;
 
 import com.drb.DrbMVP.dto.route.AiRouteResponseDto;
 import com.drb.DrbMVP.dto.route.RouteCandidate;
-import com.drb.DrbMVP.dto.route.UserRoutePreferences;
 import com.drb.DrbMVP.repository.CarRoutingRepository;
 import com.drb.DrbMVP.repository.RoutePreferencesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.Comparator;
-import java.util.List;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.*;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -17,6 +16,9 @@ public class CarRoutingService {
 
     private final CarRoutingRepository carRepo;
     private final RoutePreferencesRepository prefsRepo;
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    private static final String PYTHON_URL = "http://localhost:8000/api/routes/select";
 
     public CarRoutingService(CarRoutingRepository carRepo,
                              RoutePreferencesRepository prefsRepo) {
@@ -29,11 +31,6 @@ public class CarRoutingService {
             double latFrom, double lonFrom,
             double latTo, double lonTo) {
 
-        // Load user preferences or use defaults
-        UserRoutePreferences prefs = prefsRepo.findByUserId(userId)
-                .orElse(UserRoutePreferences.defaults(userId));
-
-        // Find nearest routable nodes
         Long sourceNode = carRepo.findNearestCarNode(latFrom, lonFrom);
         Long targetNode = carRepo.findNearestCarNode(latTo, lonTo);
 
@@ -41,9 +38,6 @@ public class CarRoutingService {
             throw new RuntimeException("Cannot find routable nodes near given coordinates");
         }
 
-        log.info("Car routing: source={} target={}", sourceNode, targetNode);
-
-        // Build all candidate routes
         List<RouteCandidate> candidates = carRepo.buildAllCandidates(
                 sourceNode, targetNode, latFrom, lonFrom, latTo, lonTo);
 
@@ -51,33 +45,55 @@ public class CarRoutingService {
             throw new RuntimeException("No car routes found between given points");
         }
 
-        // Score each candidate based on user preferences
-        double maxTime = candidates.stream().mapToDouble(RouteCandidate::getTimeMin).max().orElse(1);
-        double minTime = candidates.stream().mapToDouble(RouteCandidate::getTimeMin).min().orElse(0);
-        double timeRange = maxTime - minTime > 0 ? maxTime - minTime : 1;
+        List<Map<String, Object>> metrics = candidates.stream().map(c -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("profile",          c.getProfile());
+            m.put("totalM",           c.getTotalCostM());
+            m.put("timeMin",          c.getTimeMin());
+            m.put("safetyScore",      c.getSafetyScore());
+            m.put("beautyScore",      c.getBeautyScore());
+            m.put("simplicityScore",  c.getSimplicityScore());
+            m.put("residentialRatio", c.getResidentialRatio());
+            m.put("minorRatio",       c.getMinorRatio());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
 
-        candidates.forEach(c -> {
-            // Normalize time to 0-1 (lower time = higher score)
-            double timeScore = 1.0 - (c.getTimeMin() - minTime) / timeRange;
+        String selectedProfile = callPython(userId, metrics);
 
-            double score =
-                    prefs.getWTime()        * timeScore +
-                            prefs.getWSafety()      * c.getSafetyScore() +
-                            prefs.getWSimplicity()  * c.getSimplicityScore() +
-                            prefs.getWBeauty()      * c.getBeautyScore() +
-                            prefs.getWResidential() * c.getResidentialRatio() +
-                            prefs.getWMinor()       * c.getMinorRatio();
-
-            c.setTotalScore(score);
-        });
-
-        // Pick best candidate
         RouteCandidate best = candidates.stream()
-                .max(Comparator.comparingDouble(RouteCandidate::getTotalScore))
-                .orElseThrow();
+                .filter(c -> c.getProfile().equals(selectedProfile))
+                .findFirst()
+                .orElse(candidates.get(0));
 
-        log.info("Selected profile: {} with score: {}", best.getProfile(), best.getTotalScore());
+        log.info("Python selected profile: {}", selectedProfile);
 
         return new AiRouteResponseDto(best.getProfile(), best, candidates);
+    }
+
+    private String callPython(Long userId, List<Map<String, Object>> metrics) {
+        try {
+            Map<String, Object> body = new java.util.HashMap<>();
+            body.put("user_id", userId);
+            body.put("candidates", metrics);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    PYTHON_URL, request, Map.class);
+
+            if (response.getBody() != null && response.getBody().containsKey("selected_profile")) {
+                return (String) response.getBody().get("selected_profile");
+            }
+        } catch (Exception e) {
+            log.warn("Python ML unavailable, falling back to scoring: {}", e.getMessage());
+        }
+
+        return metrics.stream()
+                .max(Comparator.comparingDouble(m ->
+                        (double) m.get("safetyScore") + (double) m.get("beautyScore")))
+                .map(m -> (String) m.get("profile"))
+                .orElse("balanced");
     }
 }

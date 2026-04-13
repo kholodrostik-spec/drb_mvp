@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -235,5 +236,27 @@ public class CarRoutingRepository {
         RouteCandidate c = buildCandidate(profile, src, tgt,
                 latFrom, lonFrom, latTo, lonTo, cost, reverseCost);
         if (c != null) list.add(c);
+    }
+
+    public List<Map<String, Object>> buildMetricsOnly(
+            Long sourceNode, Long targetNode,
+            double latFrom, double lonFrom,
+            double latTo, double lonTo) {
+
+        List<RouteCandidate> candidates = buildAllCandidates(
+                sourceNode, targetNode, latFrom, lonFrom, latTo, lonTo);
+
+        return candidates.stream().map(c -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("profile",          c.getProfile());
+            m.put("totalM",           c.getTotalCostM());
+            m.put("timeMin",          c.getTimeMin());
+            m.put("safetyScore",      c.getSafetyScore());
+            m.put("beautyScore",      c.getBeautyScore());
+            m.put("simplicityScore",  c.getSimplicityScore());
+            m.put("residentialRatio", c.getResidentialRatio());
+            m.put("minorRatio",       c.getMinorRatio());
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
     }
 }

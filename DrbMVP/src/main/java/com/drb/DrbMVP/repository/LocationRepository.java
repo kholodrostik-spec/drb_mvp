@@ -19,9 +19,11 @@ import java.util.List;
 public class LocationRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final S3Service s3Service;
 
-    public LocationRepository(JdbcTemplate jdbcTemplate) {
+    public LocationRepository(JdbcTemplate jdbcTemplate, S3Service s3Service) {
         this.jdbcTemplate = jdbcTemplate;
+        this.s3Service = s3Service;
     }
 
     public LocationResponseDto saveLocation(LocationDto dto, NearestPointDto nearest) {
@@ -168,16 +170,21 @@ public class LocationRepository {
 
     public ReviewCheckResult findExistingReview(Long locationId, Long userId) {
         String sql = """
-        SELECT rating, comment
+        SELECT rating, comment, photo_s3_key
         FROM reviews
         WHERE location_id = ? AND user_id = ?
     """;
         try {
             return jdbcTemplate.queryForObject(sql,
-                    (rs, rowNum) -> new ReviewCheckResult(
-                            rs.getDouble("rating"),
-                            rs.getString("comment")
-                    ),
+                    (rs, rowNum) -> {
+                        String key = rs.getString("photo_s3_key");
+                        String photoUrl = key != null ? s3Service.buildUrl(key) : null;
+                        return new ReviewCheckResult(
+                                rs.getDouble("rating"),
+                                rs.getString("comment"),
+                                photoUrl
+                        );
+                    },
                     locationId, userId);
         } catch (EmptyResultDataAccessException e) {
             return null;

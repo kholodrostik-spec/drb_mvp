@@ -2,18 +2,18 @@ package com.drb.DrbMVP.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,11 +29,14 @@ public class S3Service {
     private final S3Client s3Client;
     private final String bucket;
     private final String region;
+    private final S3Presigner s3Presigner;
 
     public S3Service(S3Client s3Client,
+                     S3Presigner s3Presigner,
                      @Value("${aws.s3.bucket-name}") String bucket,
                      @Value("${aws.s3.region}") String region) {
         this.s3Client = s3Client;
+        this.s3Presigner = s3Presigner;
         this.bucket = bucket;
         this.region = region;
     }
@@ -69,7 +72,17 @@ public class S3Service {
     }
 
     public String buildUrl(String s3Key) {
-        return "https://%s.s3.%s.amazonaws.com/%s".formatted(bucket, region, s3Key);
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(s3Key)
+                .build();
+
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofHours(1))
+                .getObjectRequest(getObjectRequest)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
     private void validate(MultipartFile file) {

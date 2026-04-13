@@ -8,4 +8,5 @@ import lombok.Data;
 public class ReviewCheckResult {
      private Double rating;
      private String comment;
+     private String photoUrl;
  }

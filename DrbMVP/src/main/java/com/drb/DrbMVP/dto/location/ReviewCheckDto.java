@@ -11,4 +11,5 @@ public class ReviewCheckDto {
     private String locationName;
     private Double existingRating;
     private String existingComment;
+    private String existingPhotoUrl;
 }
