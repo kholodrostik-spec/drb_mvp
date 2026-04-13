@@ -84,7 +84,7 @@ public class LocationService {
     public ReviewCheckDto checkExistingReview(double lat, double lon, Long userId) {
         LocationResponseDto nearest = findNearestLocation(lat, lon);
         if (nearest == null) {
-            return new ReviewCheckDto(false, null, null, null, null);
+            return new ReviewCheckDto(false, null, null, null, null, null);
         }
 
         ReviewCheckResult existing = locationRepository.findExistingReview(nearest.getId(), userId);
@@ -95,11 +95,12 @@ public class LocationService {
                     nearest.getId(),
                     nearest.getName(),
                     existing.getRating(),
-                    existing.getComment()
+                    existing.getComment(),
+                    existing.getPhotoUrl()
             );
         }
 
-        return new ReviewCheckDto(false, nearest.getId(), nearest.getName(), null, null);
+        return new ReviewCheckDto(false, nearest.getId(), nearest.getName(), null, null, null);
     }
 
     public List<LocationResponseDto> searchByName(String query, int limit) {
