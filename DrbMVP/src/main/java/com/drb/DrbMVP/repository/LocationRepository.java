@@ -190,9 +190,11 @@ public class LocationRepository {
                is_default, nearest_road_name, nearest_road_highway, nearest_road_distance
         FROM locations
         WHERE LOWER(name) LIKE LOWER(?)
+           OR LOWER(REGEXP_REPLACE(name, '[^A-Z]', '', 'g')) LIKE LOWER(?)
         ORDER BY name
         LIMIT ?
     """;
+        String pattern = "%" + query + "%";
         return jdbcTemplate.query(sql,
                 (rs, rowNum) -> new LocationResponseDto(
                         rs.getLong("id"),
@@ -206,7 +208,7 @@ public class LocationRepository {
                         rs.getString("nearest_road_highway"),
                         rs.getDouble("nearest_road_distance")
                 ),
-                "%" + query + "%", limit
+                pattern, pattern, limit
         );
     }
 }
