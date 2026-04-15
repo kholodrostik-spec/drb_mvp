@@ -31,15 +31,28 @@ public class CarRoutingService {
             double latFrom, double lonFrom,
             double latTo, double lonTo) {
 
-        Long sourceNode = carRepo.findNearestCarNode(latFrom, lonFrom);
-        Long targetNode = carRepo.findNearestCarNode(latTo, lonTo);
+        List<Long> sourceNodes = carRepo.findNearestCarNodes(latFrom, lonFrom, 10);
+        List<Long> targetNodes = carRepo.findNearestCarNodes(latTo, lonTo, 10);
 
-        if (sourceNode == null || targetNode == null) {
+        if (sourceNodes.isEmpty() || targetNodes.isEmpty()) {
             throw new RuntimeException("Cannot find routable nodes near given coordinates");
         }
 
-        List<RouteCandidate> candidates = carRepo.buildAllCandidates(
-                sourceNode, targetNode, latFrom, lonFrom, latTo, lonTo);
+        List<RouteCandidate> candidates = new ArrayList<>();
+
+        outer:
+        for (Long sourceNode : sourceNodes) {
+            for (Long targetNode : targetNodes) {
+                candidates = carRepo.buildAllCandidates(
+                        sourceNode, targetNode, latFrom, lonFrom, latTo, lonTo
+                );
+
+                if (!candidates.isEmpty()) {
+                    log.info("Found route using sourceNode={} and targetNode={}", sourceNode, targetNode);
+                    break outer;
+                }
+            }
+        }
 
         if (candidates.isEmpty()) {
             throw new RuntimeException("No car routes found between given points");
