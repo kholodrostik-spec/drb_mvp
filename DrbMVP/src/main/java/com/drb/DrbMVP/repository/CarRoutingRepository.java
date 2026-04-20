@@ -22,38 +22,26 @@ public class CarRoutingRepository {
 
     public Long findNearestCarNode(double lat, double lon) {
         String sql = """
-            WITH closest_edge AS (
-                SELECT source, target, geom
-                FROM car_main_component_edges
-                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                LIMIT 20
-            ),
-            best_edge AS (
-                SELECT source, target, geom
-                FROM closest_edge
-                ORDER BY ST_Distance(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326))
-                LIMIT 1
-            )
-            SELECT
-                CASE
-                    WHEN ST_Distance(
-                        (SELECT geom FROM car_routable_vertices WHERE id = be.source),
-                        ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                    ) < ST_Distance(
-                        (SELECT geom FROM car_routable_vertices WHERE id = be.target),
-                        ST_SetSRID(ST_MakePoint(?, ?), 4326)
-                    )
-                    THEN be.source
-                    ELSE be.target
-                END AS id
-            FROM best_edge be
-        """;
+        SELECT id
+        FROM car_routable_vertices
+        ORDER BY geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+        LIMIT 1
+    """;
         try {
-            return jdbc.queryForObject(sql, Long.class,
-                    lon, lat, lon, lat, lon, lat, lon, lat);
+            return jdbc.queryForObject(sql, Long.class, lon, lat);
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    public List<Long> findNearestCarNodes(double lat, double lon, int limit) {
+        String sql = """
+        SELECT id
+        FROM car_routable_vertices
+        ORDER BY geom <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+        LIMIT ?
+    """;
+        return jdbc.queryForList(sql, Long.class, lon, lat, limit);
     }
 
     public RouteCandidate buildCandidate(
@@ -112,6 +100,11 @@ public class CarRoutingRepository {
         try {
             return jdbc.queryForObject(sql,
                     (rs, rowNum) -> {
+                        String routeGeoJson = rs.getString("route_geojson");
+                        if (routeGeoJson == null) {
+                            return null;
+                        }
+
                         double totalM = rs.getDouble("total_m");
                         double residentialM = rs.getDouble("residential_m");
                         double minorM = rs.getDouble("minor_m");
@@ -132,7 +125,7 @@ public class CarRoutingRepository {
                                 residentialRatio, minorRatio,
                                 safetyScore, beautyScore, simplicityScore,
                                 0.0,
-                                rs.getString("route_geojson"),
+                                routeGeoJson,
                                 rs.getString("snap_start_geojson"),
                                 rs.getString("snap_end_geojson")
                         );
