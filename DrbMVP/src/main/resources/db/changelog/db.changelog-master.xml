@@ -14,6 +14,8 @@
         <include file="db/changelog/create_walk_network.xml"/>
         <include file="db/changelog/create_road_network_components.xml"/>
         <include file="db/changelog/create_photo.xml"/>
+        <include file="db/changelog/create_car_network.xml"/>
         <include file="db/changelog/create_car_routable.xml"/>
+        <include file="db/changelog/create_user_route_preferences.xml"/>
 
 </databaseChangeLog>

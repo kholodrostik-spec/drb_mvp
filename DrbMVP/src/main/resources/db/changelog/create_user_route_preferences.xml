@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.17.xsd">
+
+    <changeSet id="create-user-route-preferences-44" author="rostyslav">
+        <sql>
+            CREATE TABLE user_route_preferences (
+            user_id       BIGINT PRIMARY KEY REFERENCES users(id),
+            w_time        DOUBLE PRECISION NOT NULL DEFAULT 0.4,
+            w_safety      DOUBLE PRECISION NOT NULL DEFAULT 0.2,
+            w_simplicity  DOUBLE PRECISION NOT NULL DEFAULT 0.15,
+            w_beauty      DOUBLE PRECISION NOT NULL DEFAULT 0.15,
+            w_residential DOUBLE PRECISION NOT NULL DEFAULT 0.05,
+            w_minor       DOUBLE PRECISION NOT NULL DEFAULT 0.05,
+            updated_at    TIMESTAMP DEFAULT NOW()
+            );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
